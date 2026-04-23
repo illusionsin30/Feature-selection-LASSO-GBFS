@@ -1,0 +1,17 @@
+[project]
+name = "prml-project1"
+version = "0.1.0"
+description = "PRML Spring 2026 - Project 1"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2.0",
+    "matplotlib>=3.9",
+    "ipykernel",
+    "jupyter",
+    "torch>=2.11",
+    "torchvision>=0.26",
+    "marimo[recommended]",
+]
+
+[tool.uv]
+extra-index-url = ["https://download.pytorch.org/whl/cu126"]

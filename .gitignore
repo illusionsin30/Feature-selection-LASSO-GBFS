@@ -12,6 +12,7 @@ __pycache__/
 # Jupyter / Marimo
 .ipynb_checkpoints/
 .marimo/
+__marimo__/
 
 # PyTorch model weights
 *.pth

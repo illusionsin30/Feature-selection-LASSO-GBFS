@@ -129,7 +129,7 @@ def _(clf, data, np, plt):
     )
 
     _fig.tight_layout()
-    plt.savefig("feature_selection_by_bag.png", dpi=300, bbox_inches="tight")
+    plt.savefig("images/feature_selection_by_bag.png", dpi=300, bbox_inches="tight")
     plt.gca()
     return
 
@@ -196,7 +196,7 @@ def _(avg_selected_features, np, plt, regularization_strengths, test_errors):
     _ax2.set_title("Test error vs. Number of selected features", fontsize=14, pad=12)
     _ax2.grid(True, linestyle='--', alpha=0.5)
     _fig2.tight_layout()
-    plt.savefig("test_error_vs_selected_features.png", dpi=300)
+    plt.savefig("images/test_error_vs_selected_features.png", dpi=300)
     plt.gca()
     return
 

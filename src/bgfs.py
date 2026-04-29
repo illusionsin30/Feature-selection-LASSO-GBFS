@@ -8,21 +8,21 @@ from sklearn.model_selection import train_test_split
 from matplotlib import pyplot as plt
 
 # %%
-data = np.load("colon_data.npz")
+data = np.load("../colon_data.npz")
 
 # %%
 X_train, X_test, y_train, y_test = train_test_split(
-    data["X"], data["y"], test_size=0.2, random_state=43
+    data["X"], data["y"], test_size=0.2, random_state=42
 )
 
 # %%
-def gbfs(X, y, T=2000, epsilon=0.1, mu=0.1):
+def gbfs(X, y, T=2000, epsilon=0.1, mu=0.1, depth=4):
     H = np.zeros_like(y, dtype=np.float64)
     trees = []
     Omega = set()
     for t in range(T):
         g = y * np.exp(-y * H) / (1 + np.exp(-y * H))
-        learner_tree = TreeLearner(max_depth=4, mu=mu)
+        learner_tree = TreeLearner(max_depth=depth, mu=mu)
         learner_tree.used_global_feats = Omega
         learner_tree.fit(X, g)
         Omega.update(learner_tree.used_global_feats)
@@ -30,7 +30,7 @@ def gbfs(X, y, T=2000, epsilon=0.1, mu=0.1):
         trees.append(learner_tree)
     return trees
 
-def structured_gbfs(X, y, T=2000, epsilon=0.1, mu=0.1):
+def structured_gbfs(X, y, bags, T=2000, epsilon=0.1, mu=0.1, depth=4):
     H = np.zeros_like(y, dtype=np.float64)
     trees = []
     Omega = set()
@@ -38,7 +38,7 @@ def structured_gbfs(X, y, T=2000, epsilon=0.1, mu=0.1):
     for t in range(T):
         g = y * np.exp(-y * H) / (1 + np.exp(-y * H))
         learner_tree = StructuredTreeLearner(
-            max_depth=4, mu=mu, bags=data["bag_id"]
+            max_depth=depth, mu=mu, bags=bags
         )
         learner_tree.used_global_feats = Omega
         learner_tree.used_global_bags = opened_bags
@@ -48,7 +48,7 @@ def structured_gbfs(X, y, T=2000, epsilon=0.1, mu=0.1):
         trees.append(learner_tree)
     return trees
 
-def evaluate_model(T=2000, epsilon=0.1, mu=0.1):
+def evaluate_model(data, T=2000, epsilon=0.1, mu=0.1, depth=4):
     np.random.seed(42)
     split_seeds = np.random.randint(0, 1000000, size=10)
     accuracies = []
@@ -57,23 +57,26 @@ def evaluate_model(T=2000, epsilon=0.1, mu=0.1):
         X_train, X_test, y_train, y_test = train_test_split(
             data["X"], data["y"], test_size=0.2, random_state=seed
         )
-        struc_trees = structured_gbfs(X_train, y_train, T=T, epsilon=epsilon, mu=mu)
+        struc_trees = structured_gbfs(X_train, y_train, data["bag_id"], T=T, epsilon=epsilon, mu=mu, depth=depth)
+        selected_features_nums.append(len(struc_trees[-1].used_tree_feats))
         y_pred_test = np.zeros_like(y_test, dtype=np.float64)
         accuracy = []
         for tree in struc_trees:
-            y_pred_test += 0.1 * tree.predict(X_test)
+            y_pred_test += epsilon * tree.predict(X_test)
             y_pred_test_labels = np.where(y_pred_test > 0, 1, -1)
             accu = np.mean(y_pred_test_labels == y_test)
             accuracy.append(accu)
         accuracies.append(accuracy)
-    return np.mean(accuracies, axis=0)
+
+    return np.mean(accuracies, axis=0), selected_features_nums
 
 # %%
-accuracys = evaluate_model(T=2000, epsilon=0.1, mu=1)
+accuracys = evaluate_model(data, T=2000, epsilon=0.1, mu=1)
+test_errors = 1 - accuracys
 
 # %%
 plt.figure(figsize=(10, 5))
-plt.plot(accuracys, label="Structured Test Error")
+plt.plot(test_errors, label="Structured Test Error")
 plt.xscale("log")
 plt.xlabel("Number of Trees")
 plt.ylabel("Error Rate")

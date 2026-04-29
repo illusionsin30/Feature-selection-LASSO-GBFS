@@ -22,3 +22,5 @@ data/
 
 # Nix (direnv manages this)
 .direnv/
+*.lock
+*.nix

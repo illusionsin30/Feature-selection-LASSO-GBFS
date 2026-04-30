@@ -10,11 +10,32 @@ pip install -r requirements.txt
 ## Tasks
 ### Task 1
 
-Enter `src/baseline.py` and run to get the results of Task 1. Directory `images/` gives some results of our runs. 
+Run
+
+```python
+cd src
+python baseline.py
+```
+
+The results should be like `images/feature_selection_by_bag_lasso.png` and `images/test_error_vs_selected_features.png`.
 
 ### Task 2
 
-Enter `src/bgfs.py` and run to get the results of Task 2. Vectorized Implementation of regression trees with feature-introduction penalty can be found in `src/tree.py`.
+
+Run
+
+```python
+python gbfs.py
+```
+
+The results should be like `images/feature_selection_by_bag_gbfs.png`. You should notice that the default setting for parallel accelerating in `hyperparam.py` may not be friendly to your device. Just find and modify the following content based on your device:
+
+```python
+results = Parallel(n_jobs=your_cores, verbose=10)(
+    delayed(run_one_fold)(mu, depth, X, y, bags, train_idx, test_idx, epsilon, T, mode="structured")
+    for mu, depth, fold_id, train_idx, test_idx in tasks
+)
+```
 
 ### Task 3
 
@@ -25,11 +46,4 @@ cd src
 python hyperparam.py
 ```
 
-to get the result. You should notice that the default setting for parallel accelerating in `hyperparam.py` may not be friendly to your device. Just find and modify the following content based on your device:
-
-```python
-results = Parallel(n_jobs=your_cores, verbose=10)(
-    delayed(run_one_fold)(mu, depth, X, y, bags, train_idx, test_idx, epsilon, T)
-    for mu, depth, fold_id, train_idx, test_idx in tasks
-)
-```
+to get the result. The results should be like `images/task3_results.png`.

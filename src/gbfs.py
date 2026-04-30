@@ -7,8 +7,17 @@ from utils import *
 from tree import TreeLearner, StructuredTreeLearner
 
 
-def gbfs_structured(X_train, y_train, X_test, y_test, bags,
-                    mu, max_depth, epsilon, T):
+def gbfs_structured(
+    X_train,
+    y_train,
+    X_test,
+    y_test,
+    bags,
+    mu,
+    max_depth,
+    epsilon,
+    T
+):
     n_train = X_train.shape[0]
     H = np.zeros(n_train)
     current_global_feats = set()
@@ -43,8 +52,17 @@ def gbfs_structured(X_train, y_train, X_test, y_test, bags,
     return trajectory, current_global_feats, current_global_bags
 
 
-def gbfs_standard(X_train, y_train, X_test, y_test,
-                  mu, max_depth, epsilon, T):
+def gbfs_standard(
+    X_train,
+    y_train,
+    X_test,
+    y_test,
+    bags,
+    mu,
+    max_depth,
+    epsilon,
+    T
+):
     n_train = X_train.shape[0]
     H = np.zeros(n_train)
     current_global_feats = set()
@@ -71,10 +89,21 @@ def gbfs_standard(X_train, y_train, X_test, y_test,
 
         trajectory.append((len(current_global_feats), test_err))
 
-    return trajectory, current_global_feats
+    return trajectory, current_global_feats, None
 
 
-def run_one_fold(mu, depth, X, y, bags, train_idx, test_idx, epsilon, T, mode='structured'):
+def run_one_fold(
+    mu,
+    depth,
+    X,
+    y,
+    bags,
+    train_idx,
+    test_idx,
+    epsilon,
+    T,
+    mode='structured'
+):
     fns = {
         'structured': gbfs_structured,
         'standard': gbfs_standard,
@@ -90,7 +119,7 @@ def run_one_fold(mu, depth, X, y, bags, train_idx, test_idx, epsilon, T, mode='s
 
 def main():
     np.random.seed(42)
-    X, y, bags = load_data("../colon_data.npz")
+    X, y, bags = load_data("colon_data.npz")
 
     mu = 2**-3
     depth = 4
@@ -115,11 +144,11 @@ def main():
     # 10 tasks so n_jobs is set to 10
     # make sure available cpu cores for other tasks
     results_std = Parallel(n_jobs=10, verbose=10)(
-        delayed(run_one_fold)(mu, depth, X, y, train_idx, test_idx, epsilon, T, mode="standard")
+        delayed(run_one_fold)(mu, depth, X, y, bags, train_idx, test_idx, epsilon, T, mode="standard")
         for _, _, fold_id, train_idx, test_idx in tasks_std
     )
-    std_errors = [t[-1][1] for t, _ in results_std]
-    std_feats = [n for _, n in results_std]
+    std_errors = [t[-1][1] for _, _, t, _ in results_std]
+    std_feats = [n for _, _, _, n in results_std]
     print(f"Standard GBFS: error={np.mean(std_errors):.4f}±{np.std(std_errors):.4f}, "
           f"features={np.mean(std_feats):.1f}±{np.std(std_feats):.1f}")
 
@@ -132,8 +161,8 @@ def main():
         delayed(run_one_fold)(mu, depth, X, y, bags, train_idx, test_idx, epsilon, T, mode="structured")
         for _, _, fold_id, train_idx, test_idx in tasks_struct
     )
-    struct_errors = [t[-1][1] for t, _ in results_struct]
-    struct_feats = [n for _, n in results_struct]
+    struct_errors = [t[-1][1] for _, _, t, _ in results_struct]
+    struct_feats = [n for _, _, _, n in results_struct]
     print(f"Structured GBFS: error={np.mean(struct_errors):.4f}±{np.std(struct_errors):.4f}, "
           f"features={np.mean(struct_feats):.1f}±{np.std(struct_feats):.1f}")
 
@@ -155,7 +184,7 @@ def main():
     plot_feature_selection_bag(
         mask, bags,
         title="Feature selection on structured feature data (Structured GBFS)",
-        filename="feature_selection_by_bag_gbfs.png"
+        filename="feature_selection_by_bag_gbfs.svg"
     )
 
 

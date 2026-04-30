@@ -69,7 +69,7 @@ def plot_gbfs_curves(
 
 def main():
     np.random.seed(42)
-    X, y, bags = load_data("../colon_data.npz")
+    X, y, bags = load_data("colon_data.npz")
 
     mus = [2**-3, 2**-1, 2**1, 2**3, 2**5]
     depths = [3, 4, 5]
@@ -110,7 +110,7 @@ def main():
               f"features={np.mean(final_feats):.1f}±{np.std(final_feats):.1f}")
 
     plot_gbfs_curves(combo_results, mus, depths,
-                     savefig=True, filename='task3_results.png')
+                     savefig=True, filename='task3_results.svg')
 
     print("\n===== Final Results =====")
     print(f"{'mu':<8} {'depth':<6} {'mean_err':<10} {'std_err':<10} "

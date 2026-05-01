@@ -114,6 +114,7 @@ def run_one_fold(
         X_train, y_train, X_test, y_test,
         bags, mu, depth, epsilon, T
     )
+    
     return mu, depth, traj, len(feats)
 
 
@@ -124,7 +125,7 @@ def main():
     mu = 2**-3
     depth = 4
     epsilon = 0.1
-    T = 250  
+    T = 250
     # even less can be set to speed up
     # since colon dataset is to small (62 samples)
     # larger T will overfit
@@ -173,7 +174,7 @@ def main():
     print("Plotting feature selection bag visualization …")
     start = time.perf_counter()
     _, Omega = gbfs_structured(X, y, X, y, bags,
-                               mu=0.001, max_depth=depth,
+                               mu=mu, max_depth=depth,
                                epsilon=epsilon, T=T)[:2]
     elapsed = time.perf_counter() - start
     print(f"Single‑fit for bag plot: {elapsed:.2f} s")

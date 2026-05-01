@@ -4,7 +4,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
-from utils import *
+from utils import load_data, plot_error_vs, plot_feature_selection_bag
 
 
 def evaluate_lasso_for_C(X, y, C, n_splits=10, random_state=42):
@@ -13,7 +13,7 @@ def evaluate_lasso_for_C(X, y, C, n_splits=10, random_state=42):
     errors, n_features_list = [], []
     for seed in split_seeds:
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=seed
+            X, y, test_size=0.2, random_state=seed, stratify=y
         )
         scaler = StandardScaler()
         X_train = scaler.fit_transform(X_train)
@@ -59,9 +59,11 @@ def main():
     np.random.seed(42)
     X, y, bag_id = load_data("colon_data.npz")
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
+    X_train, _, y_train, _ = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
     )
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
     clf = LogisticRegression(
         penalty="l1", solver="liblinear", C=1.0, max_iter=1000, random_state=42
     )

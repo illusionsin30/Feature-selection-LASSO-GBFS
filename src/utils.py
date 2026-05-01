@@ -1,7 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 def load_data(filepath="colon_data.npz"):
+    filepath = Path(filepath)
+    if not filepath.is_absolute() and not filepath.exists():
+        repo_path = Path(__file__).resolve().parents[1] / filepath
+        if repo_path.exists():
+            filepath = repo_path
     data = np.load(filepath)
     X = data["X"]
     y = data["y"]

@@ -1,12 +1,12 @@
+import argparse
 import numpy as np
 from sklearn.model_selection import StratifiedShuffleSplit
 import matplotlib.pyplot as plt
 from joblib import Parallel, delayed
 from itertools import product
 
-from utils import *
-from tree import *
-from gbfs import gbfs_structured, run_one_fold
+from utils import load_data
+from gbfs import default_n_jobs, run_one_fold
 
 
 def plot_gbfs_curves(
@@ -67,16 +67,30 @@ def plot_gbfs_curves(
     plt.show()
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="Run structured GBFS hyperparameter search.")
+    parser.add_argument("--n-jobs", type=int, default=None,
+                        help="Parallel workers. Defaults to min(cpu_count, number of tasks).")
+    parser.add_argument("--n-splits", type=int, default=10,
+                        help="Number of stratified shuffle splits.")
+    parser.add_argument("--T", type=int, default=2000,
+                        help="Number of boosting iterations per run.")
+    parser.add_argument("--epsilon", type=float, default=0.1,
+                        help="Boosting step size.")
+    return parser.parse_args()
+
+
 def main():
+    args = parse_args()
     np.random.seed(42)
     X, y, bags = load_data("colon_data.npz")
 
     mus = [2**-3, 2**-1, 2**1, 2**3, 2**5]
     depths = [3, 4, 5]
-    epsilon = 0.1
-    T = 2000
+    epsilon = args.epsilon
+    T = args.T
 
-    sss = StratifiedShuffleSplit(n_splits=10, test_size=0.2, random_state=42)
+    sss = StratifiedShuffleSplit(n_splits=args.n_splits, test_size=0.2, random_state=42)
     split_indices = list(sss.split(X, y))
 
     tasks = []
@@ -85,11 +99,8 @@ def main():
             tasks.append((mu, depth, fold_id, train_idx, test_idx))
 
     print(f"Total parallel tasks: {len(tasks)}")
-    #! TODO: change n_jobs to adapt your device
-    # I used 80 here since my cpu has more than 100 cores
-    # make sure your cpu has available cores to process
-    # other tasks so that your computer would not be stuck.
-    results = Parallel(n_jobs=80, verbose=10)(
+    n_jobs = args.n_jobs if args.n_jobs is not None else default_n_jobs(len(tasks))
+    results = Parallel(n_jobs=n_jobs, verbose=10)(
         delayed(run_one_fold)(mu, depth, X, y, bags, train_idx, test_idx, epsilon, T, mode="structured")
         for mu, depth, fold_id, train_idx, test_idx in tasks
     )

@@ -1,0 +1,26 @@
+# IDE
+.idea/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+*.egg
+
+# Jupyter / Marimo
+.ipynb_checkpoints/
+.marimo/
+__marimo__/
+
+# PyTorch model weights
+*.pth
+
+# Data
+data/
+
+# Nix (direnv manages this)
+.direnv/
+*.lock
+*.nix

@@ -1,7 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 def load_data(filepath="colon_data.npz"):
+    filepath = Path(filepath)
+    if not filepath.is_absolute() and not filepath.exists():
+        repo_path = Path(__file__).resolve().parents[1] / filepath
+        if repo_path.exists():
+            filepath = repo_path
     data = np.load(filepath)
     X = data["X"]
     y = data["y"]
@@ -48,7 +54,6 @@ def plot_error_vs(
     ax.set_xlabel(x_label, fontsize=13)
     ax.set_ylabel(y_label, fontsize=13)
     ax.set_title(title, fontsize=14, pad=12)
-    
     if grid:
         ax.grid(True, linestyle="--", alpha=0.5)
     
@@ -61,6 +66,7 @@ def plot_error_vs(
         print(f"Plot saved to {filename}")
     else:
         plt.show()
+
     plt.close(fig)
 
 
@@ -121,9 +127,11 @@ def plot_feature_selection_bag(feature_mask, bag_ids, title="Feature selection o
     ax.legend(legend_handles, legend_labels, loc="upper left",
               bbox_to_anchor=(1.02,1), borderaxespad=0)
     fig.tight_layout()
+
     if savefig:
         plt.savefig(filename, dpi=300, bbox_inches="tight")
         print(f"Figure saved as {filename}")
     else:
         plt.show()
+        
     plt.close(fig)

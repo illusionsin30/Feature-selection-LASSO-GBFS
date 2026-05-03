@@ -1,8 +1,12 @@
 # PRML Project 1
 
 Pattern Recognition and Machine Learning - Project 1 (Spring 2026)
+**Original article**: [Gradient Boosted Feature Selection](https://arxiv.org/abs/1901.04055)
 
 ## Installation
+
+With pip:
+
 ```bash
 pip install -r requirements.txt
 ```
@@ -13,28 +17,23 @@ pip install -r requirements.txt
 Run
 
 ```python
-cd src
-python baseline.py
+python src/baseline.py
 ```
 
-The results should be like `images/feature_selection_by_bag_lasso.png` and `images/test_error_vs_selected_features.png`.
+The results should be like `images/feature_selection_by_bag_lasso.png` and `images/test_error_vs_selected_features.png`. The script writes fresh `.svg` figures by default.
 
 ### Task 2
-
 
 Run
 
 ```python
-python gbfs.py
+python src/gbfs.py
 ```
 
-The results should be like `images/feature_selection_by_bag_gbfs.png`. You should notice that the default setting for parallel accelerating in `hyperparam.py` may not be friendly to your device. Just find and modify the following content based on your device:
+The results should be like `images/feature_selection_by_bag_gbfs.png`. The script writes a fresh `.svg` figure by default. Use `--n-jobs` to tune parallelism for your device, for example:
 
-```python
-results = Parallel(n_jobs=your_cores, verbose=10)(
-    delayed(run_one_fold)(mu, depth, X, y, bags, train_idx, test_idx, epsilon, T, mode="structured")
-    for mu, depth, fold_id, train_idx, test_idx in tasks
-)
+```bash
+python src/gbfs.py --n-jobs 4
 ```
 
 ### Task 3
@@ -42,8 +41,7 @@ results = Parallel(n_jobs=your_cores, verbose=10)(
 Run
 
 ```python
-cd src
-python hyperparam.py
+python src/hyperparam.py --n-jobs 4
 ```
 
-to get the result. The results should be like `images/task3_results.png`.
+to get the result. The results should be like `images/task3_results.png`. The script writes a fresh `.svg` figure by default.

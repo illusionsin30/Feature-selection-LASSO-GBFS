@@ -41,6 +41,8 @@ class TreeLearner:
         n = len(active_idx)
         p = self._n_feats
 
+        if n == 0:
+            return Node(depth, value=0.0)
         if depth >= self.depth or n <= 1:
             return Node(depth, value=np.mean(self._grad[active_idx]))
 
@@ -58,9 +60,8 @@ class TreeLearner:
         cum_sq = np.cumsum(sg**2, axis=0)  # (n, p)
         cum_n = np.arange(1, n + 1, dtype=np.float64)[:, None] * np.ones(p)  # (n, p)
 
-        valid = np.ones((n, p), dtype=bool)
-        valid[1:, :] = sx[1:, :] != sx[:-1, :]
-        valid[-1, :] = False
+        valid = np.zeros((n, p), dtype=bool)
+        valid[:-1, :] = sx[:-1, :] != sx[1:, :]
 
         n_L = cum_n
         n_R = n - cum_n
@@ -76,7 +77,9 @@ class TreeLearner:
         # Fix: use sse instead of mse here.
         losses[v] = (n_L[v] * mse_L + n_R[v] * mse_R) # / n
         losses *= 0.5
-
+        leaf_loss = 0.5 * (total_sq - total_sum**2 / n)
+        # leaf loss is used to decide whether to split or not
+        
         phi = np.ones(p)
         if self.used_global_feats:
             phi[list(self.used_global_feats)] = 0
@@ -88,20 +91,29 @@ class TreeLearner:
         flat = np.argmin(losses)
         best_row, best_feat = divmod(flat, p)
         best_loss = losses[best_row, best_feat]
-
-        if np.isinf(best_loss):
+        if np.isinf(best_loss) or best_loss >= leaf_loss:
             return Node(depth, value=np.mean(grad_active))
 
         best_threshold = sx[best_row, best_feat]
         self.used_tree_feats.add(best_feat)
+        self.used_global_feats.add(best_feat)
 
         left_mask = active_mask & (self._X[:, best_feat] <= best_threshold)
         right_mask = active_mask & (self._X[:, best_feat] > best_threshold)
-
         left = self._find_split(left_mask, depth + 1)
         right = self._find_split(right_mask, depth + 1)
 
         return Node(depth, left, right, best_feat, None, best_threshold)
+
+    def predict(self, X):
+        def _predict_single(x, node):
+            if node.value is not None:
+                return node.value
+            if x[node.feature_idx] <= node.threshold:
+                return _predict_single(x, node.left)
+            return _predict_single(x, node.right)
+
+        return np.array([_predict_single(x, self.root) for x in X])
 
 
 class StructuredTreeLearner(TreeLearner):
@@ -115,6 +127,8 @@ class StructuredTreeLearner(TreeLearner):
         n = len(active_idx)
         p = self._n_feats
 
+        if n == 0:
+            return Node(depth, value=0.0)
         if depth >= self.depth or n <= 1:
             return Node(depth, value=np.mean(self._grad[active_idx]))
 
@@ -133,9 +147,8 @@ class StructuredTreeLearner(TreeLearner):
         cum_sq = np.cumsum(sg**2, axis=0)
         cum_n = np.arange(1, n + 1, dtype=np.float64)[:, None] * np.ones(p)
 
-        valid = np.ones((n, p), dtype=bool)
-        valid[1:, :] = sx[1:, :] != sx[:-1, :]
-        valid[-1, :] = False
+        valid = np.zeros((n, p), dtype=bool)
+        valid[:-1, :] = sx[:-1, :] != sx[1:, :]
 
         n_L = cum_n
         n_R = n - cum_n
@@ -150,6 +163,8 @@ class StructuredTreeLearner(TreeLearner):
         mse_R = sq_R[v] / n_R[v] - (sum_R[v] / n_R[v]) ** 2
         losses[v] = (n_L[v] * mse_L + n_R[v] * mse_R) # / n
         losses *= 0.5
+        leaf_loss = 0.5 * (total_sq - total_sum**2 / n)
+        # leaf loss is used to decide whether to split or not
 
         phi = np.ones(p)
         if self.used_global_bags:
@@ -162,8 +177,7 @@ class StructuredTreeLearner(TreeLearner):
         flat = np.argmin(losses)
         best_row, best_feat = divmod(flat, p)
         best_loss = losses[best_row, best_feat]
-
-        if np.isinf(best_loss):
+        if np.isinf(best_loss) or best_loss >= leaf_loss:
             return Node(depth, value=np.mean(grad_active))
 
         best_threshold = sx[best_row, best_feat]
@@ -173,19 +187,7 @@ class StructuredTreeLearner(TreeLearner):
 
         left_mask = active_mask & (self._X[:, best_feat] <= best_threshold)
         right_mask = active_mask & (self._X[:, best_feat] > best_threshold)
-
         left = self._find_split(left_mask, depth + 1)
         right = self._find_split(right_mask, depth + 1)
 
         return Node(depth, left, right, best_feat, None, best_threshold)
-
-    def predict(self, X):
-        def _predict_single(x, node):
-            if node.value is not None:
-                return node.value
-            if x[node.feature_idx] <= node.threshold:
-                return _predict_single(x, node.left)
-            else:
-                return _predict_single(x, node.right)
-
-        return np.array([_predict_single(x, self.root) for x in X])
